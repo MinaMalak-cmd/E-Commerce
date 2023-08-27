@@ -1,0 +1,12 @@
+import mongoose from "mongoose";
+
+
+const connectDB = async () =>{
+    return await mongoose.connect(`${process.env.DB_URL}/E-Commerce`)
+    .then((res) =>{
+        console.log("🚀DB Connected .........")
+    }).catch((err) =>{
+        console.log("🚀 ~ file: connection.js:6 ~.catch ~ err:", err)
+    });
+}
+export default connectDB;
