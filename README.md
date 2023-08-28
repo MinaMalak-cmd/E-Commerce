@@ -3,6 +3,7 @@ E Commerce app using Node.js, Express, MongoDB, JWT, express-validators
 
 ## to do 
  - Finish all entities 
+   - Categories (all cruds, image upload, assign category to user, only venods admins who can add new products)
  - Error handling in both front & back
  - Add validations to all points 
  - Check other repos 
