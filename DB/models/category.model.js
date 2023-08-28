@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 const categorySchema = new Schema(
   {
@@ -14,16 +14,24 @@ const categorySchema = new Schema(
     slug: {
       type: String,
       required: true,
-      match: /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/,
+      match: /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*$/,
     },
     image: {
-      secure_url: String,
-      public_id: String,
+      secure_url: {
+        type: String,
+        required: false,
+      },
+      public_id: {
+        type: String,
+        required: false,
+      },
     },
     createdBy: {
-      type: ObjectId,
+      type: Types.ObjectId,
       ref: "User",
+      required: false, // TODO: convert into true after creating usermodel
     },
+    customId: String,
   },
   {
     timestamps: true,
