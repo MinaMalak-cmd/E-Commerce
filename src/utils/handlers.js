@@ -1,7 +1,9 @@
 export const asyncHandler = (fn) => {
     return (req, res, next) => {
-        fn(req, res, next).catch(error =>{
+        fn(req, res, next).catch(error => {
+            console.log("🚀 ~ file: handlers.js:4 ~ fn ~ error:", error)
             return next(new Error(error))
+        	// }
         })
     }
 }
