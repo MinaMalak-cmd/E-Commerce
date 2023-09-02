@@ -8,7 +8,7 @@ import categoryModel from "../../../../DB/models/category.model.js";
 // try create slug using hooks
 
 export const addCategory = asyncHandler(async (req, res, next) => {
-
+  // add created by 
   let { name, createdBy } = req.body;
   name = name.toLowerCase();
   const exisitngCategory = await categoryModel.findOne({ name });

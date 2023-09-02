@@ -6,8 +6,7 @@ import { uploadCloudinary } from "../../services/uploadCloudinary.js";
 
 const router = Router();
 
-// router.post('/', validation(categoryValidators.addCategory), uploadCloudinary().single('image'), categoryController.addCategory);
-router.post('/', uploadCloudinary().single('image'), categoryController.addCategory);
+router.post('/', uploadCloudinary().single('image'), validation(categoryValidators.addCategory), categoryController.addCategory);
 router.get('/', categoryController.getAllCategories);
 
 export default router;
