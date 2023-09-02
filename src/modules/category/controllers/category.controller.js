@@ -61,3 +61,40 @@ export const getAllCategories = asyncHandler(async (req, res, next) => {
   return categories ? SuccessResponse(res, { message: "Categories retrieved successfully", statusCode: 200, categories }, 200) : 
    next(new Error("Get All Categories", { cause: 400 }));
 });
+
+export const updateCategory = asyncHandler(async (req, res, next) => {
+  // if name is already existing 
+  // if id is in wrong format or not existing
+  // update name, slug, photo
+    const { id } = req.params;
+    let { name } = req.body;
+    const category = await categoryModel.findById(id);
+
+    if(!category){
+      return next(new Error('Category is not found', { cause: 400 }))
+    }
+    if(name){
+      name = name.toLowerCase();
+      if(name === category.name){
+        return next(new Error('Please enter new name from the old one', { cause: 400 }))
+      }
+      const existingCat = await categoryModel.findOne({name});
+      if(existingCat){
+        return next(new Error('Please enter new name', { cause: 400 }))
+      }
+      category.name = name;
+      category.slug = slugify(name, "_");
+    }
+    if(req.file){
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";   
+      await cloudinary.uploader.destroy(category?.image?.public_id);
+      const { public_id, secure_url } = await cloudinary.uploader.upload(
+        req.file.path, {
+          folder: `E-Commerce/Categories/${category.customId}`,
+        });
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";   
+      category.image = { public_id, secure_url };
+    }
+    await category.save();
+    return SuccessResponse(res, { message: "Category updated successfully", statusCode: 200, category }, 200) 
+});
