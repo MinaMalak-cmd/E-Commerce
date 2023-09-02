@@ -8,11 +8,10 @@ import categoryModel from "../../../../DB/models/category.model.js";
 // try create slug using hooks
 
 export const addCategory = asyncHandler(async (req, res, next) => {
-  // console.log("🚀 ~ file: category.controller.js:12 ~ addCategory ~ name:", req.body, req.file)
+
   let { name, createdBy } = req.body;
   name = name.toLowerCase();
   const exisitngCategory = await categoryModel.findOne({ name });
-  // console.log("🚀 ~ file: category.controller.js:16 ~ addCategory ~ exisitngCategory:", exisitngCategory, name)
   if (exisitngCategory) {
     return next(
       new Error("Please enter different category name", { cause: 400 })
@@ -23,19 +22,14 @@ export const addCategory = asyncHandler(async (req, res, next) => {
   }
   const slug = slugify(name, "_");
   const customId = generateRandomString();
-  // console.log("🚀 ~ file: category.controller.js:26 ~ addCategory ~ customId:", customId);
 
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; 
-  
-  // console.log("🚀 ~ file: category.controller.js:35 ~ addCategory ~ process.env.PROJECT_FOLDER:", process.env.PROJECT_FOLDER, 'E-Commerce/Categories/${customId}')
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";   
   const { public_id, secure_url } = await cloudinary.uploader.upload(
     req.file.path,
     {
       folder: `E-Commerce/Categories/${customId}`,
     }
     );
-    // console.log("🚀 ~ file: category.controller.js:32 ~ addCategory ~ public_id, secure_url:", public_id, secure_url)
-    // console.log("🚀 ~ file: category.controller.js:29 ~ addCategory ~ `${process.env.PROJECT_FOLDER}/Categories/${customId}`:", `${process.env.PROJECT_FOLDER}/Categories/${customId}`)
   const categoryObject = {
     name,
     slug,

@@ -12,8 +12,8 @@ const initApp = async (express) => {
   app.use(express.json());
 
   await connectDB();
-
-  app.use("/e-commerce/category", categoryRouter);
+  const base = '/e-commerce';
+  app.use(`${base}/category`, categoryRouter);
 
   app.use("*", (req, res, next) => {
     return res.json({ message: "In-valid Routing" });
