@@ -20,3 +20,9 @@ export const updateCategory = {
     }).required(),
     file: generalFields.file,
 }
+
+export const deleteCategory = {
+    params : Joi.object({
+        id : generalFields._id
+    }).options({ presence : "required" }),
+}

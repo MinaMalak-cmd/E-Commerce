@@ -5,7 +5,7 @@ import { SuccessResponse } from "../../src/utils/handlers.js";
 const dataMethods = ["body", "params", "query", "headers", "file", "files"];
 
 const validationObjectId = (value, helper) => {
-  return Types.ObjectId.isValid(value) ? true : helper.message("invalid reference id");
+  return Types.ObjectId.isValid(value) ? true : helper.message("Invalid ObjectId format");
 };
 
 export const validation = (JoiSchema) => {

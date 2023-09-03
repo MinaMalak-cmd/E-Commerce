@@ -59,7 +59,7 @@ export const getAllCategories = asyncHandler(async (req, res, next) => {
   //   return next(new Error("You can't add this resource", { cause: 404 }));
   // }
   return categories ? SuccessResponse(res, { message: "Categories retrieved successfully", statusCode: 200, categories }, 200) : 
-   next(new Error("Get All Categories", { cause: 400 }));
+   next(new Error("Can't get All Categories", { cause: 400 }));
 });
 
 export const updateCategory = asyncHandler(async (req, res, next) => {
@@ -100,6 +100,17 @@ export const updateCategory = asyncHandler(async (req, res, next) => {
 });
 
 export const deleteCategory = asyncHandler(async (req, res, next) => {
-  console.log("🚀 ~ file: category.controller.js:103 ~ deleteCategory ~ req:");
-  
+  const { id } = req.params;
+  const category = await categoryModel.findById(id);
+  console.log("🚀 ~ file: category.controller.js:105 ~ deleteCategory ~ category:", category, category?.image)
+  if(!category){
+    return next(new Error('Category is not found', { cause: 400 }))
+  }
+  if(category.image){
+    SuccessResponse(res, { message: "Category deleted successfully", statusCode: 200, deletedCategory }, 200)
+  }
+  // const deletedCategory = await categoryModel.deleteOne({ _id : id });
+  // return deletedCategory.deletedCount ? SuccessResponse(res, { message: "Category deleted successfully", statusCode: 200, deletedCategory }, 200) : 
+  //   next(new Error("Can't delete category successfully", { cause: 400 }));
+
 });
