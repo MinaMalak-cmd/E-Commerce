@@ -98,3 +98,8 @@ export const updateCategory = asyncHandler(async (req, res, next) => {
     await category.save();
     return SuccessResponse(res, { message: "Category updated successfully", statusCode: 200, category }, 200) 
 });
+
+export const deleteCategory = asyncHandler(async (req, res, next) => {
+  console.log("🚀 ~ file: category.controller.js:103 ~ deleteCategory ~ req:");
+  
+});
