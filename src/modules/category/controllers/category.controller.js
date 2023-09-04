@@ -101,16 +101,17 @@ export const updateCategory = asyncHandler(async (req, res, next) => {
 
 export const deleteCategory = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
-  const category = await categoryModel.findById(id);
-  console.log("🚀 ~ file: category.controller.js:105 ~ deleteCategory ~ category:", category, category?.image)
+  const category = await categoryModel.findOneAndDelete({ _id : id });
   if(!category){
     return next(new Error('Category is not found', { cause: 400 }))
   }
-  if(category.image){
-    SuccessResponse(res, { message: "Category deleted successfully", statusCode: 200, deletedCategory }, 200)
+
+  if(category?.image?.public_id){
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";   
+    await cloudinary.api.delete_resources_by_prefix(`E-Commerce/Categories/${category.customId}`); //remove folder and sub folders content
+    await cloudinary.api.delete_folder(`E-Commerce/Categories/${category.customId}`); //remove the folder tree
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";   
   }
-  // const deletedCategory = await categoryModel.deleteOne({ _id : id });
-  // return deletedCategory.deletedCount ? SuccessResponse(res, { message: "Category deleted successfully", statusCode: 200, deletedCategory }, 200) : 
-  //   next(new Error("Can't delete category successfully", { cause: 400 }));
+  return SuccessResponse(res, { message: "Category deleted successfully", statusCode: 200, category }, 200)
 
 });
