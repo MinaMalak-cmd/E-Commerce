@@ -6,50 +6,51 @@ import categoryModel from "../../../../DB/models/category.model.js";
 import subCategoryModel from "../../../../DB/models/subcategory.model.js";
 
 
-// export const addCategory = asyncHandler(async (req, res, next) => {
-//   // add created by 
-//   let { name, createdBy } = req.body;
-//   name = name.toLowerCase();
-//   const exisitngCategory = await categoryModel.findOne({ name });
-//   if (exisitngCategory) {
-//     return next(
-//       new Error("Please enter different category name", { cause: 400 })
-//     );
-//   }
-//   if (!req.file) {
-//     return next(new Error("Please upload a category image", { cause: 400 }));
-//   }
-//   const slug = slugify(name, "_");
-//   const customId = generateRandomString();
-
-//   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";   
-//   const { public_id, secure_url } = await cloudinary.uploader.upload(
-//     req.file.path,
-//     {
-//       folder: `E-Commerce/Categories/${customId}`,
-//     }
-//     );
-//   const categoryObject = {
-//     name,
-//     slug,
-//     image: {
-//       secure_url,
-//       public_id,
-//     },
-//     customId,
-//   };
-//   const category = await categoryModel.create(categoryObject);
-//   if(!category){
-//     await cloudinary.uploader.destroy(public_id);
-//     return next(new Error("You can't add this resource", { cause: 404 }));
-//   }
-//   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1"; 
-//   return SuccessResponse(
-//     res,
-//     { message: "Category created successfully", statusCode: 230, category },
-//     201
-//   );
-// });
+export const addSubCategory = asyncHandler(async (req, res, next) => {
+  // add created by 
+  let { name, createdBy, categoryId } = req.body;
+  name = name.toLowerCase();
+  const exisitngCategory = await categoryModel.findOne({ name });
+  if (exisitngCategory) {
+    return next(
+      new Error("Please enter different category name", { cause: 400 })
+    );
+  }
+  if (!req.file) {
+    return next(new Error("Please upload a category image", { cause: 400 }));
+  }
+  const slug = slugify(name, "_");
+  const customId = generateRandomString();
+  return res.json({slug, customId, categoryId, name})
+  // const customPath = 
+  // process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";   
+  // const { public_id, secure_url } = await cloudinary.uploader.upload(
+  //   req.file.path,
+  //   {
+  //     folder: `${process.env.PROJECT_FOLDER}/Categories/${customId}`,
+  //   }
+  //   );
+  // const categoryObject = {
+  //   name,
+  //   slug,
+  //   image: {
+  //     secure_url,
+  //     public_id,
+  //   },
+  //   customId,
+  // };
+  // const category = await categoryModel.create(categoryObject);
+  // if(!category){
+  //   await cloudinary.uploader.destroy(public_id);
+  //   return next(new Error("You can't add this resource", { cause: 404 }));
+  // }
+  // process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1"; 
+  // return SuccessResponse(
+  //   res,
+  //   { message: "Category created successfully", statusCode: 230, category },
+  //   201
+  // );
+});
 
 export const getAllSubCategories = asyncHandler(async (req, res, next) => {
   const subCategories = await subCategoryModel.find();

@@ -10,6 +10,7 @@ E Commerce app using Node.js, Express, MongoDB, JWT, express-validators
    - Subcategory 
         -Add relative path field in subcategory 
         -Get subcategory with its Cateory and brands
+        -Add validation
  - Error handling in both front & back
  - Add validations to all points 
  - Check other repos 
