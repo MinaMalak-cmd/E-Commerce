@@ -6,6 +6,8 @@ E Commerce app using Node.js, Express, MongoDB, JWT, express-validators
    - Categories 
         -Assign category to user, only vendors, and admins who can add new products, 
         -On Delete Delete category subchildren (subcategory, brands, products)
+   - Subcategory 
+        -Add relative path field in subcategory 
  - Error handling in both front & back
  - Add validations to all points 
  - Check other repos 
