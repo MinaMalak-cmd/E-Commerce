@@ -27,7 +27,7 @@ export const addCategory = asyncHandler(async (req, res, next) => {
   const { public_id, secure_url } = await cloudinary.uploader.upload(
     req.file.path,
     {
-      folder: `E-Commerce/Categories/${customId}`,
+      folder: `${process.env.PROJECT_FOLDER}/Categories/${customId}`,
     }
     );
   const categoryObject = {
@@ -90,7 +90,7 @@ export const updateCategory = asyncHandler(async (req, res, next) => {
       await cloudinary.uploader.destroy(category?.image?.public_id);
       const { public_id, secure_url } = await cloudinary.uploader.upload(
         req.file.path, {
-          folder: `E-Commerce/Categories/${category.customId}`,
+          folder: `${process.env.PROJECT_FOLDER}/Categories/${category.customId}`,
         });
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";   
       category.image = { public_id, secure_url };
@@ -108,8 +108,8 @@ export const deleteCategory = asyncHandler(async (req, res, next) => {
 
   if(category?.image?.public_id){
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";   
-    await cloudinary.api.delete_resources_by_prefix(`E-Commerce/Categories/${category.customId}`); //remove folder and sub folders content
-    await cloudinary.api.delete_folder(`E-Commerce/Categories/${category.customId}`); //remove the folder tree
+    await cloudinary.api.delete_resources_by_prefix(`${process.env.PROJECT_FOLDER}/Categories/${category.customId}`); //remove folder and sub folders content
+    await cloudinary.api.delete_folder(`${process.env.PROJECT_FOLDER}/Categories/${category.customId}`); //remove the folder tree
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";   
   }
   return SuccessResponse(res, { message: "Category deleted successfully", statusCode: 200, category }, 200)
