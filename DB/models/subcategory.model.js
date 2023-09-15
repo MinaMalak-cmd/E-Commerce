@@ -36,7 +36,6 @@ const subCategorySchema = new Schema(
         ref: 'Category',
         required: true,
     },
-    customId: String,
     customPath: String,
   },
   {
