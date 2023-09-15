@@ -45,9 +45,7 @@ export const addCategory = asyncHandler(async (req, res, next) => {
   const category = await categoryModel.create(categoryObject);
   if (!category) {
     await cloudinary.uploader.destroy(public_id);
-    await cloudinary.api.delete_folder(
-      customPath,
-    )
+    await cloudinary.api.delete_folder(customPath);
     return next(new Error("You can't add this resource", { cause: 404 }));
   }
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
@@ -59,11 +57,9 @@ export const addCategory = asyncHandler(async (req, res, next) => {
 });
 
 export const getAllCategories = asyncHandler(async (req, res, next) => {
-  const categories = await categoryModel.find();
-  // if(!category){
-  //   await cloudinary.uploader.destroy(public_id);
-  //   return next(new Error("You can't add this resource", { cause: 404 }));
-  // }
+  const categories = await categoryModel
+    .find()
+    .populate([{ path: "subCategories", select: "name -categoryId -_id" }]);
   return categories
     ? SuccessResponse(
         res,
