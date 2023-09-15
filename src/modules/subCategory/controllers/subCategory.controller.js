@@ -66,42 +66,43 @@ export const getAllSubCategories = asyncHandler(async (req, res, next) => {
     : next(new Error("Can't get All Sub Categories", { cause: 400 }));
 });
 
-// export const updateCategory = asyncHandler(async (req, res, next) => {
-//   // if name is already existing
-//   // if id is in wrong format or not existing
-//   // update name, slug, photo
-//     const { id } = req.params;
-//     let { name } = req.body;
-//     const category = await categoryModel.findById(id);
-
-//     if(!category){
-//       return next(new Error('Category is not found', { cause: 400 }))
-//     }
-//     if(name){
-//       name = name.toLowerCase();
-//       if(name === category.name){
-//         return next(new Error('Please enter new name from the old one', { cause: 400 }))
-//       }
-//       const existingCat = await categoryModel.findOne({name});
-//       if(existingCat){
-//         return next(new Error('Please enter new name', { cause: 400 }))
-//       }
-//       category.name = name;
-//       category.slug = slugify(name, "_");
-//     }
-//     if(req.file){
-//       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-//       await cloudinary.uploader.destroy(category?.image?.public_id);
-//       const { public_id, secure_url } = await cloudinary.uploader.upload(
-//         req.file.path, {
-//           folder: `E-Commerce/Categories/${category.customId}`,
-//         });
-//       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
-//       category.image = { public_id, secure_url };
-//     }
-//     await category.save();
-//     return SuccessResponse(res, { message: "Category updated successfully", statusCode: 200, category }, 200)
-// });
+export const updateSubCategory = asyncHandler(async (req, res, next) => {
+    const { id } = req.params;
+    let { name, categoryId } = req.body;
+    const subCategory = await subCategoryModel.findById(id);
+    if(!subCategory){
+      return next(new Error('subCategory is not found', { cause: 400 }))
+    }
+    const category = await categoryModel.findById(categoryId);
+    if (!category) {
+      return next(new Error("Category doesn't exist", { cause: 400 }));
+    }
+    subCategory.categoryId = categoryId;
+    if(name){
+      name = name.toLowerCase();
+      if(name === subCategory.name){
+        return next(new Error('Please enter different name from the old one', { cause: 400 }))
+      }
+      const existingCat = await subCategoryModel.findOne({name});
+      if(existingCat){
+        return next(new Error('Please enter new name', { cause: 400 }))
+      }
+      subCategory.name = name;
+      subCategory.slug = slugify(name, "_");
+    }
+    if(req.file){
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      await cloudinary.uploader.destroy(subCategory?.image?.public_id);
+      const { public_id, secure_url } = await cloudinary.uploader.upload(
+        req.file.path, {
+          folder: subCategory?.customPath,
+        });
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+      subCategory.image = { public_id, secure_url };
+    }
+    await subCategory.save();
+    return SuccessResponse(res, { message: "subCategory updated successfully", statusCode: 200, subCategory }, 200)
+});
 
 export const deleteSubCategory = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
