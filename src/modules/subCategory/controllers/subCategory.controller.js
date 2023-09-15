@@ -12,8 +12,8 @@ export const addSubCategory = asyncHandler(async (req, res, next) => {
   if (!req.file) {
     return next(new Error("Please upload a category image", { cause: 400 }));
   }
-  const exisitngSubCategory = await subCategoryModel.findOne({ name });
-  if (exisitngSubCategory) {
+  const isNameDuplicate = await subCategoryModel.findOne({ name });
+  if (isNameDuplicate) {
     return next(
       new Error("Please enter different category name", { cause: 400 })
     );
@@ -52,7 +52,7 @@ export const addSubCategory = asyncHandler(async (req, res, next) => {
 });
 
 export const getAllSubCategories = asyncHandler(async (req, res, next) => {
-  const subCategories = await subCategoryModel.find();
+  const subCategories = await subCategoryModel.find().populate({ path: 'categoryId', select: 'name -_id' });
   return subCategories
     ? SuccessResponse(
         res,
