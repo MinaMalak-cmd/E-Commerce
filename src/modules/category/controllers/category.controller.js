@@ -128,11 +128,11 @@ export const deleteCategory = asyncHandler(async (req, res, next) => {
   // db
   const deleteRelatedSubCategories = await subCategoryModel.deleteMany({
     categoryId: id,
-  })
+  });
   if (!deleteRelatedSubCategories.deletedCount) {
     return next(new Error("Can't delete sub Category fail", { cause: 400 }));
-  }  
-  // delete cloud 
+  }
+  // delete cloud
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
   await cloudinary.api.delete_resources_by_prefix(
     `${process.env.PROJECT_FOLDER}/Categories/${category.customId}`
@@ -141,7 +141,7 @@ export const deleteCategory = asyncHandler(async (req, res, next) => {
     `${process.env.PROJECT_FOLDER}/Categories/${category.customId}`
   ); //remove the folder tree
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
-  
+
   return SuccessResponse(
     res,
     { message: "Category deleted successfully", statusCode: 200, category },
