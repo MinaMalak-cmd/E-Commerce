@@ -8,7 +8,7 @@ import categoryModel from "../../../../DB/models/category.model.js";
 // try create slug using hooks
 
 export const addCategory = asyncHandler(async (req, res, next) => {
-  // add created by 
+  // add created by
   let { name, createdBy } = req.body;
   name = name.toLowerCase();
   const exisitngCategory = await categoryModel.findOne({ name });
@@ -23,13 +23,16 @@ export const addCategory = asyncHandler(async (req, res, next) => {
   const slug = slugify(name, "_");
   const customId = generateRandomString();
 
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";   
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  const customPath = `${process.env.PROJECT_FOLDER}/Categories/${customId}`;
   const { public_id, secure_url } = await cloudinary.uploader.upload(
     req.file.path,
     {
-      folder: `${process.env.PROJECT_FOLDER}/Categories/${customId}`,
+      folder: customPath,
     }
-    );
+  );
+  req.imgPath = customPath;
+
   const categoryObject = {
     name,
     slug,
@@ -40,11 +43,14 @@ export const addCategory = asyncHandler(async (req, res, next) => {
     customId,
   };
   const category = await categoryModel.create(categoryObject);
-  if(!category){
+  if (!category) {
     await cloudinary.uploader.destroy(public_id);
+    await cloudinary.api.delete_folder(
+      customPath,
+    )
     return next(new Error("You can't add this resource", { cause: 404 }));
   }
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1"; 
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
   return SuccessResponse(
     res,
     { message: "Category created successfully", statusCode: 230, category },
@@ -58,60 +64,84 @@ export const getAllCategories = asyncHandler(async (req, res, next) => {
   //   await cloudinary.uploader.destroy(public_id);
   //   return next(new Error("You can't add this resource", { cause: 404 }));
   // }
-  return categories ? SuccessResponse(res, { message: "Categories retrieved successfully", statusCode: 200, categories }, 200) : 
-   next(new Error("Can't get All Categories", { cause: 400 }));
+  return categories
+    ? SuccessResponse(
+        res,
+        {
+          message: "Categories retrieved successfully",
+          statusCode: 200,
+          categories,
+        },
+        200
+      )
+    : next(new Error("Can't get All Categories", { cause: 400 }));
 });
 
 export const updateCategory = asyncHandler(async (req, res, next) => {
-  // if name is already existing 
+  // if name is already existing
   // if id is in wrong format or not existing
   // update name, slug, photo
-    const { id } = req.params;
-    let { name } = req.body;
-    const category = await categoryModel.findById(id);
+  const { id } = req.params;
+  let { name } = req.body;
+  const category = await categoryModel.findById(id);
 
-    if(!category){
-      return next(new Error('Category is not found', { cause: 400 }))
+  if (!category) {
+    return next(new Error("Category is not found", { cause: 400 }));
+  }
+  if (name) {
+    name = name.toLowerCase();
+    if (name === category.name) {
+      return next(
+        new Error("Please enter new name from the old one", { cause: 400 })
+      );
     }
-    if(name){
-      name = name.toLowerCase();
-      if(name === category.name){
-        return next(new Error('Please enter new name from the old one', { cause: 400 }))
+    const existingCat = await categoryModel.findOne({ name });
+    if (existingCat) {
+      return next(new Error("Please enter new name", { cause: 400 }));
+    }
+    category.name = name;
+    category.slug = slugify(name, "_");
+  }
+  if (req.file) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    await cloudinary.uploader.destroy(category?.image?.public_id);
+    const { public_id, secure_url } = await cloudinary.uploader.upload(
+      req.file.path,
+      {
+        folder: `${process.env.PROJECT_FOLDER}/Categories/${category.customId}`,
       }
-      const existingCat = await categoryModel.findOne({name});
-      if(existingCat){
-        return next(new Error('Please enter new name', { cause: 400 }))
-      }
-      category.name = name;
-      category.slug = slugify(name, "_");
-    }
-    if(req.file){
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";   
-      await cloudinary.uploader.destroy(category?.image?.public_id);
-      const { public_id, secure_url } = await cloudinary.uploader.upload(
-        req.file.path, {
-          folder: `${process.env.PROJECT_FOLDER}/Categories/${category.customId}`,
-        });
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";   
-      category.image = { public_id, secure_url };
-    }
-    await category.save();
-    return SuccessResponse(res, { message: "Category updated successfully", statusCode: 200, category }, 200) 
+    );
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+    category.image = { public_id, secure_url };
+  }
+  await category.save();
+  return SuccessResponse(
+    res,
+    { message: "Category updated successfully", statusCode: 200, category },
+    200
+  );
 });
 
 export const deleteCategory = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
-  const category = await categoryModel.findOneAndDelete({ _id : id });
-  if(!category){
-    return next(new Error('Category is not found', { cause: 400 }))
+  const category = await categoryModel.findOneAndDelete({ _id: id });
+  if (!category) {
+    return next(new Error("Category is not found", { cause: 400 }));
   }
 
-  if(category?.image?.public_id){
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";   
-    await cloudinary.api.delete_resources_by_prefix(`${process.env.PROJECT_FOLDER}/Categories/${category.customId}`); //remove folder and sub folders content
-    await cloudinary.api.delete_folder(`${process.env.PROJECT_FOLDER}/Categories/${category.customId}`); //remove the folder tree
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";   
+  if (category?.image?.public_id) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    await cloudinary.api.delete_resources_by_prefix(
+      `${process.env.PROJECT_FOLDER}/Categories/${category.customId}`
+    ); //remove folder and sub folders content
+    await cloudinary.api.delete_folder(
+      `${process.env.PROJECT_FOLDER}/Categories/${category.customId}`
+    ); //remove the folder tree
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
   }
-  return SuccessResponse(res, { message: "Category deleted successfully", statusCode: 200, category }, 200)
-
+  return SuccessResponse(
+    res,
+    { message: "Category deleted successfully", statusCode: 200, category },
+    200
+  );
 });

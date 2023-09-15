@@ -32,13 +32,14 @@ export const addSubCategory = asyncHandler(async (req, res, next) => {
       folder: customPath,
     }
   );
-  req.imgPath = public_id;
+  req.imgPath = customPath;
   const subCategoryObject = {
     name, slug, image : { public_id, secure_url }, categoryId, customPath 
   }
   const subCategory = await subCategoryModel.create(subCategoryObject);
   if(!subCategory){
     await cloudinary.uploader.destroy(public_id);
+    await cloudinary.api.delete_folder(customPath);
     return next(new Error("You can't add this resource", { cause: 404 }));
   }
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1"; 

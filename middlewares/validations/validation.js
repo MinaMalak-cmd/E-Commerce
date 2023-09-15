@@ -22,11 +22,9 @@ export const validation = (JoiSchema) => {
       }
     });
     if (validationErr.length > 0) {
-      return SuccessResponse(
-        res,
-        { message: "Validation Error", validationErr },
-        404
-      );
+      req.validationErrors = validationErr;
+      return next(new Error('', { cause: 404 }))
+
     }
     return next();
   };
