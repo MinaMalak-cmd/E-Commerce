@@ -1,9 +1,12 @@
+import cloudinary from "./cloudinaryConfigurations.js";
+
 export const asyncHandler = (fn) => {
     return (req, res, next) => {
-        fn(req, res, next).catch(error => {
-            console.log("🚀 ~ file: handlers.js:4 ~ fn ~ error:", error)
+        fn(req, res, next).catch(async (error) => {
+            if(req.method !== "GET" && req.imgPath){
+              await cloudinary.uploader.destroy(req.imgPath);
+            }
             return next(new Error(error))
-        	// }
         })
     }
 }
