@@ -103,18 +103,18 @@ export const getAllSubCategories = asyncHandler(async (req, res, next) => {
 //     return SuccessResponse(res, { message: "Category updated successfully", statusCode: 200, category }, 200)
 // });
 
-// export const deleteCategory = asyncHandler(async (req, res, next) => {
-//   const { id } = req.params;
-//   const category = await categoryModel.findOneAndDelete({ _id : id });
-//   if(!category){
-//     return next(new Error('Category is not found', { cause: 400 }))
-//   }
+export const deleteSubCategory = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
 
-//   if(category?.image?.public_id){
-//     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-//     await cloudinary.api.delete_resources_by_prefix(`E-Commerce/Categories/${category.customId}`); //remove folder and sub folders content
-//     await cloudinary.api.delete_folder(`E-Commerce/Categories/${category.customId}`); //remove the folder tree
-//     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
-//   }
-//   return SuccessResponse(res, { message: "Category deleted successfully", statusCode: 200, category }, 200)
-// });
+  const subCategory = await subCategoryModel.findOneAndDelete({ _id : id });
+  if(!subCategory){
+    return next(new Error('subCategory is not found', { cause: 400 }))
+  }
+  if(subCategory?.image?.public_id){
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    await cloudinary.api.delete_resources_by_prefix(subCategory.customPath); //remove folder and sub folders content
+    await cloudinary.api.delete_folder(subCategory.customPath); //remove the folder tree
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+  }
+  return SuccessResponse(res, { message: "subCategory deleted successfully", statusCode: 200 }, 200)
+});

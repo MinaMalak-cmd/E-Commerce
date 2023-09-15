@@ -8,7 +8,7 @@ const router = Router();
 
 router.post('/', uploadCloudinary().single('image'), validation(subCategoryValidators.addSubCategory), subCategoryController.addSubCategory);
 // router.put('/:id', uploadCloudinary().single('image'), validation(categoryValidators.updateCategory), categoryController.updateCategory);
-// router.delete('/:id', validation(categoryValidators.deleteCategory), categoryController.deleteCategory);
+router.delete('/:id', validation(subCategoryValidators.deleteSubCategory), subCategoryController.deleteSubCategory);
 router.get('/',  subCategoryController.getAllSubCategories);
 
 export default router;
