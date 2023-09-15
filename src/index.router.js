@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 
 import categoryRouter from "./modules/category/category.router.js";
 import subCategoryRouter from "./modules/subCategory/subCategory.router.js";
+import brandRouter from "./modules/brands/brand.router.js";
 import { globalErrorHandling } from "./utils/handlers.js";
 
 const initApp = async (express) => {
@@ -16,6 +17,7 @@ const initApp = async (express) => {
   const base = `/${process.env.PROJECT_FOLDER}`;
   app.use(`${base}/category`, categoryRouter);
   app.use(`${base}/sub-category`, subCategoryRouter);
+  app.use(`${base}/brand`, brandRouter);
 
   app.use("*", (req, res, next) => {
     return res.json({ message: "In-valid Routing" });

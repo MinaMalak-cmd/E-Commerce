@@ -36,7 +36,11 @@ const brandSchema = new Schema(
       ref: 'subCategory',
       required: true,
     },
-    customId: String,
+    categoryId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Category',
+      required: true,
+    },
     customPath: String,
   },
   {
