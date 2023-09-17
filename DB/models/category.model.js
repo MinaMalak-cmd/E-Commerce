@@ -1,4 +1,6 @@
 import mongoose, { Schema, Types, model } from "mongoose";
+import subCategoryModel from "./subcategory.model.js";
+import brandModel from "./brand.model.js";
 
 const categorySchema = new Schema(
   {
@@ -51,6 +53,18 @@ categorySchema.virtual('brands', {
   foreignField: 'categoryId'
 });
 
+// categorySchema.post('findOneAndDelete', { document: true, query: true } ,function(next, doc) {
+categorySchema.pre('findOneAndDelete', { document: true, query: true } ,async function(next) {
+  const categoryId = this?._conditions?._id || 0;
+  console.log('Middleware on parent document', categoryId, this); // Will be executed
+  try {
+    await subCategoryModel.deleteMany({ categoryId: categoryId });
+    await brandModel.deleteMany({ categoryId: categoryId });
+    next();
+  } catch (error) {
+    return next(new Error(`${error} from hook part`, { cause: 500 }))
+  }
+});
 const categoryModel = mongoose.models["Category"] || model("Category", categorySchema);
 
 export default categoryModel;

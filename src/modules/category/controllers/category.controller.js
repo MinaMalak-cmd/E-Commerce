@@ -3,10 +3,9 @@ import cloudinary from "../../../utils/cloudinaryConfigurations.js";
 import { SuccessResponse, asyncHandler } from "../../../utils/handlers.js";
 import { generateRandomString } from "../../../utils/stringMethods.js";
 import categoryModel from "../../../../DB/models/category.model.js";
-import subCategoryModel from "../../../../DB/models/subcategory.model.js";
 
 // corner cases : check from file (if sent), check from createdBy if sent
-// try create slug using hooks
+
 
 export const addCategory = asyncHandler(async (req, res, next) => {
   // add created by
@@ -153,20 +152,21 @@ export const deleteCategory = asyncHandler(async (req, res, next) => {
   if (!category) {
     return next(new Error("Category is not found", { cause: 400 }));
   }
-  // db
-  const deleteRelatedSubCategories = await subCategoryModel.deleteMany({
-    categoryId: id,
-  });
-  if (!deleteRelatedSubCategories.deletedCount) {
-    return next(new Error("Can't delete sub Category fail", { cause: 400 }));
-  }
+  // db handled from hook side
+  // const deleteRelatedSubCategories = await subCategoryModel.deleteMany({
+  //   categoryId: id,
+  // });
+  // if (!deleteRelatedSubCategories.deletedCount) {
+  //   return next(new Error("Can't delete sub Category", { cause: 400 }));
+  // }
+
   // delete cloud
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
   await cloudinary.api.delete_resources_by_prefix(
-    `${process.env.PROJECT_FOLDER}/Categories/${category.customId}`
+    `${process.env.PROJECT_FOLDER}/Categories/${category?.customId}`
   ); //remove folder and sub folders content
   await cloudinary.api.delete_folder(
-    `${process.env.PROJECT_FOLDER}/Categories/${category.customId}`
+    `${process.env.PROJECT_FOLDER}/Categories/${category?.customId}`
   ); //remove the folder tree
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
 
