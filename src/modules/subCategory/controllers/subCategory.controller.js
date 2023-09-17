@@ -52,7 +52,14 @@ export const addSubCategory = asyncHandler(async (req, res, next) => {
 });
 
 export const getAllSubCategories = asyncHandler(async (req, res, next) => {
-  const subCategories = await subCategoryModel.find().populate({ path: 'categoryId', select: 'name -_id' });
+  const subCategories = await subCategoryModel.find()
+    .populate([
+      { path: 'categoryId', select: 'name -_id' },
+      {
+        path: 'brands',
+        select: 'name',
+      },
+  ]);
   return subCategories
     ? SuccessResponse(
         res,

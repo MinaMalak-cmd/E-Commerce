@@ -45,6 +45,12 @@ categorySchema.virtual('subCategories', {
   foreignField: 'categoryId'
 });
 
+categorySchema.virtual('brands', {
+  ref: 'Brand',
+  localField: '_id',
+  foreignField: 'categoryId'
+});
+
 const categoryModel = mongoose.models["Category"] || model("Category", categorySchema);
 
 export default categoryModel;

@@ -60,7 +60,35 @@ export const addCategory = asyncHandler(async (req, res, next) => {
 export const getAllCategories = asyncHandler(async (req, res, next) => {
   const categories = await categoryModel
     .find()
-    .populate([{ path: "subCategories", select: "name -categoryId -_id" }]);
+    .populate([{ path: "subCategories", select: "name -categoryId -_id"}, { path: "brands", select: "name"  }]);
+    /*
+    // .populate([{ path: "subCategories", select: "name -categoryId -_id", populate : { path: "brands", select: "name" } }]);
+      This way to retrieve data in this format 
+      "subCategories": [
+                {
+                    "name": "electronics",
+                    "brands": [
+                        {
+                            "_id": "6504638ec8938bd4f0ab0875",
+                            "name": "telecom",
+                            "subCategoryId": "650442777ffcf2b8230a71bd"
+                        }
+                    ],
+                    "id": null
+                },
+                {
+                    "name": "home appliances",
+                    "brands": [
+                        {
+                            "_id": "650463d4c8938bd4f0ab0882",
+                            "name": "2bupdated",
+                            "subCategoryId": "65046679c8938bd4f0ab0890"
+                        }
+                    ],
+                    "id": null
+                }
+            ],
+    */
   return categories
     ? SuccessResponse(
         res,
