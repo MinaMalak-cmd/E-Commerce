@@ -7,8 +7,8 @@ import { uploadCloudinary } from "../../services/uploadCloudinary.js";
 const router = Router();
 
 router.post('/', uploadCloudinary().single('image'), validation(productValidators.addProduct), productController.addProduct);
-router.put('/:id', uploadCloudinary().single('image'), validation(productValidators.updateProduct), productController.updateProduct);
-router.delete('/:id', validation(productValidators.deleteProduct), productController.deleteProduct);
-router.get('/',  productController.getAllProducts);
+// router.put('/:id', uploadCloudinary().single('image'), validation(productValidators.updateProduct), productController.updateProduct);
+// router.delete('/:id', validation(productValidators.deleteProduct), productController.deleteProduct);
+// router.get('/',  productController.getAllProducts);
 
 export default router;
