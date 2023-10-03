@@ -8,7 +8,7 @@ import { allowedExtensions } from "../../utils/allowedExtensions.js";
 const router = Router();
 
 router.post('/', uploadCloudinary(allowedExtensions.Image).array('images',10), validation(productValidators.addProduct), productController.addProduct);
-// router.put('/:id', uploadCloudinary().single('image'), validation(productValidators.updateProduct), productController.updateProduct);
+router.put('/:id', uploadCloudinary(allowedExtensions.Image).array('images',10), validation(productValidators.updateProduct), productController.updateProduct);
 // router.delete('/:id', validation(productValidators.deleteProduct), productController.deleteProduct);
 // router.get('/',  productController.getAllProducts);
 

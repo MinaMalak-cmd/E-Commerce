@@ -52,22 +52,10 @@ export const addProduct = asyncHandler(async (req, res, next) => {
         );
         Images.push({ public_id, secure_url });
     }
-    // createdBy
     const productObject = {
-        title,
-        slug,
-        description,
-        price,
-        priceAfterDiscount,
-        appliedDiscount,
-        stock,
-        Images,
-        customPath,
-        colors,
-        sizes,
-        subCategoryId,
-        categoryId,
-        brandId,
+        title, slug, description, price,
+        priceAfterDiscount, appliedDiscount, stock, Images,
+        customPath, colors, sizes, subCategoryId, categoryId, brandId,
       };
       const product = await productModel.create(productObject);
       if (!product) {
@@ -81,4 +69,88 @@ export const addProduct = asyncHandler(async (req, res, next) => {
         { message: "Product created successfully", statusCode: 230, product },
         201
       );
+});
+
+export const updateProduct = asyncHandler(async (req, res, next) => {
+    let { title, description, colors, sizes, price, appliedDiscount, stock } = req.body;
+    const { categoryId, subCategoryId, brandId, createdBy } = req.query;
+    const { id } = req.params;
+    const product = await productModel.findById(id); //TODO: convert to findOne and owner
+    if (!product) {
+        return next(new Error('invalid product', { cause: 400 }))
+    }
+    //=============================== Ids Checks======================
+    const category = await categoryModel.findById(categoryId || product.categoryId);
+    if (!category) {
+        return next(new Error("Category doesn't exist", { cause: 400 }));
+    }
+    if(categoryId){
+        product.categoryId = categoryId;
+    }
+    const subCategory = await subCategoryModel.findById(subCategoryId || product.subCategoryId);
+    if (!subCategory) {
+        return next(new Error("Sub Category doesn't exist", { cause: 400 }));
+    }
+    if(subCategory){
+        product.subCategory = subCategory;
+    }
+    const brand = await brandModel.findById(brandId || product.brandId);
+    if (!brand) {
+        return next(new Error("Brand doesn't exist", { cause: 400 }));
+    }
+    if(brandId){
+        product.brandId = brandId;
+    }
+    title = title.toLowerCase();
+    if(title){
+        const isTitleDuplicated = await productModel.findOne({ title });
+        if (isTitleDuplicated) {
+            return next(new Error("Please enter different product name", { cause: 400 }));
+        }
+        product.title = title;
+        product.slug = slugify(title, '_');
+    }
+    if (description) product.description = description;
+    if (stock) product.stock = stock;
+    if (colors) product.colors = colors;
+    if (sizes) product.sizes = sizes;
+    let priceAfterDiscount;
+    if(price && appliedDiscount) {
+        priceAfterDiscount = price * (1- (appliedDiscount || 0) / 100);
+        product.price = price;
+        product.priceAfterDiscount = priceAfterDiscount;
+        product.appliedDiscount = appliedDiscount;
+    } else if (price){
+        priceAfterDiscount = price * (1- (product.appliedDiscount || 0) / 100);
+        product.price = price;
+        product.priceAfterDiscount = priceAfterDiscount;
+    } else if(appliedDiscount){
+        priceAfterDiscount = product.price * (1- (appliedDiscount || 0) / 100);
+        product.priceAfterDiscount = priceAfterDiscount;
+        product.appliedDiscount = appliedDiscount;
+    }
+   
+    // Images
+    if(req.files.length){
+        const customPath = product.customPath;
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+        const Images = [];
+        req.imgPath = customPath;
+        for(let file of req.files){
+            const { public_id, secure_url } = await cloudinary.uploader.upload(
+                file.path,
+                {
+                folder: customPath,
+                }
+            );
+            Images.push({ public_id, secure_url });
+            product.Images = Images;
+        }
+    }
+    await product.save();
+    return SuccessResponse(
+        res,
+        { message: "Product Updated successfully", statusCode: 235, product },
+        200
+      ); 
 });
