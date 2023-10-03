@@ -59,7 +59,7 @@ export const addCategory = asyncHandler(async (req, res, next) => {
 export const getAllCategories = asyncHandler(async (req, res, next) => {
   const categories = await categoryModel
     .find()
-    .populate([{ path: "subCategories", select: "name -categoryId -_id"}, { path: "brands", select: "name"  }]);
+    .populate([{ path: "subCategories", select: "name -categoryId -_id"}, { path: "brands", select: "name"  }, { path: "products", select: "name"  }]);
     /*
     // .populate([{ path: "subCategories", select: "name -categoryId -_id", populate : { path: "brands", select: "name" } }]);
       This way to retrieve data in this format 

@@ -154,3 +154,23 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
         200
       ); 
 });
+
+export const getAllProducts = asyncHandler(async (req, res, next) => {
+    const products = await productModel.find().populate([
+      { path: "categoryId", select: "name -_id" },
+      { path: "subCategoryId", select: "name -_id" },
+      { path: "brandId", select: "name -_id" },
+    ]);
+    return products
+      ? SuccessResponse(
+          res,
+          {
+            message: "products retrieved successfully",
+            statusCode: 200,
+            products,
+          },
+          200
+        )
+      : next(new Error("Can't get All products", { cause: 400 }));
+  });
+  
