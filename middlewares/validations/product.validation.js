@@ -4,7 +4,7 @@ import { generalFields } from "./validation.js";
 export const addProduct = {
   body: Joi.object({
     title: Joi.string().min(2).max(100).required(),
-    desc: Joi.string().min(4).max(255),
+    description: Joi.string().min(4).max(255),
     price: Joi.number().positive().required(),
     appliedDiscount: Joi.number().positive().min(1).max(100),
     stock: Joi.number().positive().required(),
@@ -17,7 +17,7 @@ export const addProduct = {
     subCategoryId: generalFields._id,
     brandId: generalFields._id,
   }).options({ presence: "required" }),
-  file: generalFields.file.required(),
+  files: Joi.array().items(generalFields.file.required()).required(),
 };
 
 export const updateProduct = {
@@ -26,7 +26,7 @@ export const updateProduct = {
   }).options({ presence: "required" }),
   body: Joi.object({
     title: Joi.string().min(2).max(100),
-    desc: Joi.string().min(4).max(255),
+    description: Joi.string().min(4).max(255),
     price: Joi.number().positive(),
     appliedDiscount: Joi.number().positive().min(1).max(100),
     stock: Joi.number().positive(),
@@ -39,7 +39,7 @@ export const updateProduct = {
     subCategoryId: generalFields._id,
     brandId: generalFields._id,
   }).options({ presence: "optional" }),
-  file: generalFields.file,
+  files: Joi.array().items(generalFields.file.required()),
 };
 
 export const deleteProduct = {

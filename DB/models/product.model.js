@@ -17,7 +17,7 @@ const productSchema = new Schema(
       required: true,
       match: /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*$/,
     },
-    desc: String,
+    description: String,
 
     // ====================== price ==================
     price: {
