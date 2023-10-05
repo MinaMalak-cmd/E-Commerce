@@ -198,28 +198,15 @@ export const getAllProducts = asyncHandler(async (req, res, next) => {
 });
 export const getSelectedProducts = asyncHandler(async (req, res, next) => {
   const { page, size, sort, select, search, ...filter } = req.query;
-  // const products = await productModel.find().select('title price stock').sort(sort);
-  // const products = await productModel.find().select('title price stock').sort(sort).limit(2).skip(0);
-  const { limit, skip } = pagination({ page, size });
-  // const products = await productModel.find({
-  //     $or:[
-  //         {title : {$regex: search, $options: 'i'}},
-  //         {description : {$regex: search, $options: 'i'}}
-  //     ]
-  // })
   // .select(select?.replaceAll(',', ' ')).limit(limit).skip(skip).sort(sort?.replaceAll(',',' '));
   // send sort in this format -stock,-price As -stock -price space will be replaced by %$ in url
   // which make url unreadable
 
   // to translate request price: { eq: '110' } to this format you must write it in postman as following : price[eq] in key, and 110 in value 
-//   const queryFilter = JSON.parse(JSON.stringify(filter).replace(/gt|gte|lt|lte|in|nin|regex|eq|neq/g,(match) => `$${match}`));
+``// const queryFilter = JSON.parse(JSON.stringify(filter).replace(/gt|gte|lt|lte|in|nin|regex|eq|neq/g,(match) => `$${match}`));
   
-//   const products = await productModel.find(queryFilter);
-//   const products =  productModel.find({}); // mongoose query
-//   const data = await products;
-    const apiFeatureInstance = new ApiFeatures(productModel.find(), req.query).pagination().filter().sort().select();
-    const products = await apiFeatureInstance.mongooseQuery;
-//   const productsLength = await productModel.count();
+  const apiFeatureInstance = new ApiFeatures(productModel.find(), req.query).pagination().filter().sort().select();
+  const products = await apiFeatureInstance.mongooseQuery;
   return products
     ? SuccessResponse(
         res,
