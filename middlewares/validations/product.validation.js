@@ -39,7 +39,7 @@ export const updateProduct = {
     subCategoryId: generalFields._id,
     brandId: generalFields._id,
   }).options({ presence: "optional" }),
-  files: Joi.array().items(generalFields.file.required()),
+  files: Joi.array().items(generalFields.file),
 };
 
 export const deleteProduct = {
