@@ -6,7 +6,6 @@ import categoryModel from "../../../../DB/models/category.model.js";
 import subCategoryModel from "../../../../DB/models/subcategory.model.js";
 import brandModel from "../../../../DB/models/brand.model.js";
 import cloudinary from "../../../utils/cloudinaryConfigurations.js";
-import pagination from "../../../utils/pagination.js";
 import { ApiFeatures } from "../../../utils/apiFeaturesClass.js";
 
 export const addProduct = asyncHandler(async (req, res, next) => {
