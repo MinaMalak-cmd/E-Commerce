@@ -11,7 +11,6 @@ const sendEmail = async ({
   html,
   attachments,
 }) => {
-  console.log( process.env.EMAIL);
   const transporter = nodemailer.createTransport({
     host: "localhost",
     port: 567,
