@@ -8,8 +8,7 @@ import categoryModel from "../../../../DB/models/category.model.js";
 
 
 export const addCategory = asyncHandler(async (req, res, next) => {
-  // add created by
-  let { name, createdBy } = req.body;
+  let { name } = req.body;
   name = name.toLowerCase();
   const exisitngCategory = await categoryModel.findOne({ name });
   if (exisitngCategory) {
@@ -36,6 +35,7 @@ export const addCategory = asyncHandler(async (req, res, next) => {
   const categoryObject = {
     name,
     slug,
+    createdBy: req.user._id,
     image: {
       secure_url,
       public_id,

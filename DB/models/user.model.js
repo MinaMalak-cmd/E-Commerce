@@ -26,7 +26,7 @@ const userSchema = new Schema(
       default: "male",
       enum: ["male", "female"],
     },
-    cofirmEmail: {
+    confirmEmail: {
       type: Boolean,
       default: false,
     },
