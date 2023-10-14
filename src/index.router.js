@@ -7,6 +7,7 @@ import subCategoryRouter from "./modules/subCategory/subCategory.router.js";
 import brandRouter from "./modules/brands/brand.router.js";
 import productRouter from "./modules/products/product.router.js";
 import cartRouter from "./modules/carts/cart.router.js";
+import couponRouter from "./modules/coupons/coupon.router.js";
 import { globalErrorHandling } from "./utils/handlers.js";
 
 const initApp = async (express) => {
@@ -24,6 +25,7 @@ const initApp = async (express) => {
   app.use(`${base}/brand`, brandRouter);
   app.use(`${base}/product`, productRouter);
   app.use(`${base}/cart`, cartRouter);
+  app.use(`${base}/coupon`, couponRouter);
 
   app.use("*", (req, res, next) => {
     return res.json({ message: "In-valid Routing" });
