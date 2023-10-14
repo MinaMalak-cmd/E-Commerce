@@ -51,4 +51,8 @@ export const generalFields = {
     path: Joi.string().required(),
     size: Joi.number().required()
   }),
+  productInCart : Joi.object({
+    productId: Joi.string().custom(validationObjectId),
+    quantity: Joi.number().integer().min(1)
+  }),
 };
