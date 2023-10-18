@@ -41,6 +41,11 @@ export const generalFields = {
     })
     .required(),
   _id : Joi.string().custom(validationObjectId),
+  couponAssignedToUsers: Joi.object({
+    userId : Joi.string().custom(validationObjectId).required(),
+    maxUsage : Joi.number().integer().min(1).required(),
+    // usageCount: Joi.number().integer()
+  }),
   file : Joi.object({
     fieldname: Joi.string().required(),
     originalname: Joi.string().required(),
