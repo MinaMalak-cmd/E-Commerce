@@ -71,3 +71,16 @@ export const getAllCoupons = asyncHandler(async (req, res, next) => {
       )
     : next(new Error("Can't get All coupons", { cause: 400 }));
 });
+
+export const deleteCoupon = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const coupon = await couponModel.findOneAndDelete({ _id: id });
+  if (!coupon) {
+    return next(new Error("Coupon is not found", { cause: 400 }));
+  }
+  return SuccessResponse(
+    res,
+    { message: "Coupon deleted successfully", statusCode: 200, coupon },
+    200
+  );
+});
