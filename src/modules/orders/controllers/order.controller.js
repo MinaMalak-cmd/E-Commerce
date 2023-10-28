@@ -3,18 +3,44 @@ import orderModel from "../../../../DB/models/order.model.js";
 import { SuccessResponse, asyncHandler } from "../../../utils/handlers.js";
 import userModel from "../../../../DB/models/user.model.js";
 
-// export const addOrder = asyncHandler(async (req, res, next) => {
-//   let {
-//     orderCode,
-//     orderAmount,
-//     orderStatus,
-//     fromDate,
-//     toDate,
-//     orderAssignedToUsers,
-//     isFixedAmount,
-//     isPercentage,
-//   } = req.body;
-
+export const addOrder = asyncHandler(async (req, res, next) => {
+const userId = req.user._id;
+  const {
+    products,
+    couponCode,
+    address, 
+    phoneNumbers,
+    paymentMethod,
+  } = req.body;
+  let sentProducts = [];
+  let subTotal = 0;
+  for (let i = 0; i < products.length; i++) {
+    const productCheck = await productModel
+      .findOne({
+        _id: products[i].productId,
+        stock: { $gte: products[i].quantity },
+      })
+      .select("priceAfterDiscount title");
+    if (!productCheck)
+      return next(
+        new Error(
+          "Either product isn't existing or doesn't have enough quantity",
+          { cause: 400 }
+        )
+      );
+    else {
+      let finalPrice = products[i].quantity * productCheck.priceAfterDiscount
+      sentProducts.push({
+        productId: productCheck._id,
+        quantity: products[i].quantity,
+        title: productCheck.title,
+        price: productCheck.priceAfterDiscount,
+        finalPrice
+      });
+      subTotal += finalPrice
+      continue;
+    }
+  }
 //   //  *********************** order code check
 //   const order = await orderModel.findOne({ orderCode });
 //   if (order) {
@@ -54,7 +80,7 @@ import userModel from "../../../../DB/models/user.model.js";
 //     { message: "Order created successfully", statusCode: 230, orderdb },
 //     201
 //   );
-// });
+});
 
 export const getAllOrders = asyncHandler(async (req, res, next) => {
   const orders = await orderModel.find();

@@ -10,6 +10,6 @@ const router = Router();
 
 router.post('/', handleAuth, validation(cartValidators.addCart), cartController.addToCart);
 router.get('/',  handleAuth, handleUserRole([systemRoles.SUPER_ADMIN]), cartController.getAllCarts);
-router.delete('/:productId', handleAuth, cartController.deleteFromCart);
+router.patch('/:productId', handleAuth, handleUserRole([systemRoles.ADMIN, systemRoles.USER]), cartController.deleteFromCart);
 router.delete('/', handleAuth, cartController.deleteAllCartsForThisUser);
 export default router;
