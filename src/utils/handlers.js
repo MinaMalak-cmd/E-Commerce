@@ -3,7 +3,6 @@ import cloudinary from "./cloudinaryConfigurations.js";
 export const asyncHandler = (fn) => {
     return (req, res, next) => {
         fn(req, res, next).catch(async (error) => {
-          console.log("🚀 ~ file: handlers.js:6 ~ return ~ error:", error)
           //============================= cloud ======================
           if(req.method !== "GET" && req.imgPath){
             await cloudinary.api.delete_resources_by_prefix(req.imgPath);
