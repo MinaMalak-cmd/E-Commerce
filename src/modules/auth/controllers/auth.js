@@ -8,7 +8,7 @@ import sendEmail from "../../../services/emailService.js";
 export const signup = asyncHandler(async (req, res, next) => {
   const protocol = req.protocol;
   const host = req.headers.host;
-  const { userName, email, password, cPassword, age, gender, phone } = req.body;
+  const { userName, email, password, cPassword, age, gender, phone, address, role } = req.body;
 
   if (password != cPassword) {
     return next(new Error("Password Mismatch cPassword", { cause: 400 }));
@@ -32,6 +32,8 @@ export const signup = asyncHandler(async (req, res, next) => {
     age,
     gender,
     phone,
+    address, 
+    role
   });
 
   const token = jwt.sign(

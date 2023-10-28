@@ -1,5 +1,5 @@
 import mongoose, { Schema, Types, model } from "mongoose";
-import { orderStatus, paymentMethods } from "../../src/utils/constants";
+import { orderStatus, paymentMethods } from "../../src/utils/constants.js";
 
 const orderSchema = new Schema(
   {
@@ -60,7 +60,7 @@ const orderSchema = new Schema(
     orderStatus : {
       type: String,
       required: true,
-      enum : [Object.values(orderStatus)]
+      enum : [...Object.values(orderStatus)]
     }
   },
   {

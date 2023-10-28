@@ -1,4 +1,5 @@
 import mongoose, { Schema, Types, model } from "mongoose";
+import { systemRoles } from "../../src/utils/constants.js";
 
 const userSchema = new Schema(
   {
@@ -24,13 +25,33 @@ const userSchema = new Schema(
     gender: {
       type: String,
       default: "male",
-      enum: ["male", "female"],
+      enum: ["male", "female", 'Not specified'],
     },
     confirmEmail: {
       type: Boolean,
+      required: true,
       default: false,
     },
-    phone: String,
+    role: {
+      type : String,
+      default: systemRoles.USER,
+      enum: [...Object.values(systemRoles)]
+    },
+    phone: {
+      type: String,
+      required: true
+    },
+    status: {
+      type: String,
+      default: 'Offline',
+      enum: ['Online', 'Offline'],
+    },
+    address: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     isDeleted: {
       type: Boolean,
       default: false,
@@ -45,6 +66,7 @@ const userSchema = new Schema(
         public_id: String,
       },
     ],
+    forgetCode: String,
   },
   {
     timestamps: true,

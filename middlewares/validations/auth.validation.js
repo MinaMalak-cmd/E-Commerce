@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import { generalFields } from "./validation.js";
+import { systemRoles } from "../../src/utils/constants.js";
 
 export const signup = {
     body : 
@@ -12,7 +13,9 @@ export const signup = {
             phone : Joi.string().pattern(new RegExp(/^01[0125][0-9]{8}$/)).required(),
             gender : Joi.string().valid('male', 'female'),
             confirmEmail: Joi.boolean().truthy("1").falsy("0").sensitive(),
-        }).required(),
+            address : Joi.array().items(Joi.string().min(3).max(100)).required(),
+            role : Joi.string().valid(...Object.values(systemRoles)).required()
+        }),
     files: Joi.object({
         profile : generalFields.file.required(),
         cover: Joi.array().items(generalFields.file.required())

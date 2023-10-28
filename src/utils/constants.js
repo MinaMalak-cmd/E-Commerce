@@ -12,3 +12,10 @@ export const orderStatus = {
     DELIVERED: 'delivered',
     CANCELLED: 'cancelled',
 }
+
+export const systemRoles = {
+    USER:'user',
+    ADMIN:'admin',
+    VENDOR:'vendor',
+    SUPER_ADMIN: 'superAdmin',
+}
