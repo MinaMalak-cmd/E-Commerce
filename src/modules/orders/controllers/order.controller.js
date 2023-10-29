@@ -4,14 +4,9 @@ import { SuccessResponse, asyncHandler } from "../../../utils/handlers.js";
 import userModel from "../../../../DB/models/user.model.js";
 
 export const addOrder = asyncHandler(async (req, res, next) => {
-const userId = req.user._id;
-  const {
-    products,
-    couponCode,
-    address, 
-    phoneNumbers,
-    paymentMethod,
-  } = req.body;
+  const userId = req.user._id;
+  const { products, address, phoneNumbers, paymentMethod } = req.body;
+  const coupon = req?.coupon;
   let sentProducts = [];
   let subTotal = 0;
   for (let i = 0; i < products.length; i++) {
@@ -29,57 +24,51 @@ const userId = req.user._id;
         )
       );
     else {
-      let finalPrice = products[i].quantity * productCheck.priceAfterDiscount
+      let finalPrice = products[i].quantity * productCheck.priceAfterDiscount;
       sentProducts.push({
         productId: productCheck._id,
         quantity: products[i].quantity,
         title: productCheck.title,
         price: productCheck.priceAfterDiscount,
-        finalPrice
+        finalPrice,
       });
-      subTotal += finalPrice
+      subTotal += finalPrice;
       continue;
     }
   }
-//   //  *********************** order code check
-//   const order = await orderModel.findOne({ orderCode });
-//   if (order) {
-//     return next(new Error("Duplicate order code", { cause: 400 }));
-//   }
-//   if (isPercentage == isFixedAmount) {
-//     return next(new Error("Please select one of them", { cause: 400 }));
-//   }
+  if (coupon?.isFixedAmount && subTotal < coupon?.couponAmount) {
+    return next(new Error("Invalid coupon amount", { cause: 400 }));
+  }
+  let paidAmount;
+  if (coupon?.isFixedAmount) {
+    paidAmount = subTotal - coupon?.isFixedAmount;
+  } else if (coupon?.isPercentage) {
+    paidAmount = subTotal * (1 - (req.coupon.couponAmount || 0) / 100);
+  } else {
+    paidAmount = subTotal;
+  }
+  let orderStatus = paymentMethod == "cash" ? "placed" : "pending";
 
-//   if (isPercentage && (orderAmount < 1 || orderAmount > 100)) {
-//     return next(new Error("Invalid OrderAmount", { cause: 400 }));
-//   }
-//   let userArr = [];
-//   for (const user of orderAssignedToUsers) {
-//     userArr.push(user.userId);
-//   }
-//   const dbCheck = await userModel.find({ _id: { $in: userArr } });
-//   if (dbCheck.length !== userArr.length) {
-//     return next(new Error("Invalid userIds", { cause: 400 }));
-//   }
-
-//   const orderObject = {
-//     orderCode,
-//     orderAmount,
-//     orderStatus,
-//     fromDate,
-//     toDate,
-//     orderAssignedToUsers,
-//     isFixedAmount,
-//     isPercentage,
-//   };
-
-//   const orderdb = await orderModel.create(orderObject);
-
-//   return SuccessResponse(
-//     res,
-//     { message: "Order created successfully", statusCode: 230, orderdb },
-//     201
-//   );
+  const orderObject = {
+    userId,
+    products: sentProducts,
+    subTotal,
+    couponId: coupon?._id || null,
+    paidAmount,
+    address,
+    phoneNumbers,
+    paymentMethod,
+    orderStatus,
+  };
+  const orderDb = await orderModel.create(orderObject);
+  if (!orderDb) {
+    return next(new Error("Order fail"));
+  }
+  return SuccessResponse(
+    res,
+    { message: "Order created successfully", statusCode: 230, orderDb },
+    201
+  );
 });
 
 export const getAllOrders = asyncHandler(async (req, res, next) => {
@@ -89,7 +78,7 @@ export const getAllOrders = asyncHandler(async (req, res, next) => {
     ? SuccessResponse(
         res,
         {
-          message: "orders retrieved successfully",
+          message: "Orders retrieved successfully",
           statusCode: 200,
           orders,
         },
@@ -98,6 +87,82 @@ export const getAllOrders = asyncHandler(async (req, res, next) => {
     : next(new Error("Can't get All orders", { cause: 400 }));
 });
 
+export const formCartToOrder = asyncHandler(async (req, res, next) => {
+  const userId = req.user._id;
+  const { cartId, address, phoneNumbers, paymentMethod } = req.body;
+  const cart = await cartModel.findOne({ _id: cartId, userId });
+  if (!cart || !cart.products.length) {
+    return next(new Error("Invalid cart", { cause: 400 }));
+  }
+  const coupon = req?.coupon;
+  for (let product of cart.products) {
+    const productCheck = await productModel
+      .findById(product._id)
+      .select("priceAfterDiscount title");
+    if (!productCheck) {
+      return next(
+        new Error(
+          "Either product isn't existing or doesn't have enough quantity",
+          { cause: 400 }
+        )
+      );
+    } else {
+      let finalPrice = product.quantity * productCheck.priceAfterDiscount;
+      sentProducts.push({
+        productId: productCheck._id,
+        quantity: product.quantity,
+        title: productCheck.title,
+        price: productCheck.priceAfterDiscount,
+        finalPrice,
+      });
+      continue;
+    }
+  }
+  let subTotal = cart.subTotal;
+  if (coupon?.isFixedAmount && subTotal < coupon?.couponAmount) {
+    return next(new Error("Invalid coupon amount", { cause: 400 }));
+  }
+  let paidAmount;
+  if (coupon?.isFixedAmount) {
+    paidAmount = subTotal - coupon?.isFixedAmount;
+  } else if (coupon?.isPercentage) {
+    paidAmount = subTotal * (1 - (req.coupon.couponAmount || 0) / 100);
+  } else {
+    paidAmount = subTotal;
+  }
+  let orderStatus = paymentMethod == "cash" ? "placed" : "pending";
+  const orderObject = {
+    userId,
+    products: sentProducts,
+    subTotal,
+    couponId: coupon?._id || null,
+    paidAmount,
+    address,
+    phoneNumbers,
+    paymentMethod,
+    orderStatus,
+  };
+  const orderDb = await orderModel.create(orderObject);
+  if (!orderDb) {
+    return next(new Error("Order fail"));
+  }
+  if (coupon) {
+    for (const user of coupon.couponAssginedToUsers) {
+      if (user.userId.toString() == userId.toString()) {
+        user.usageCount += 1;
+      }
+    }
+    await coupon.save();
+  }
+  cart.products = [];
+  cart.subTotal = 0;
+  await cart.save();
+  return SuccessResponse(
+    res,
+    { message: "Order created successfully", statusCode: 230, orderDb },
+    201
+  );
+});
 // export const deleteOrder = asyncHandler(async (req, res, next) => {
 //   const { id } = req.params;
 //   const order = await orderModel.findOneAndDelete({ _id: id });

@@ -5,7 +5,7 @@ import { asyncHandler } from "../src/utils/handlers.js";
 const handleUserRole = (accessRoles) => {
   return asyncHandler(async (req, res, next) => {
     if (!accessRoles.includes(req.user.role)) {
-      return next(new Error("unAuthorized to access", { cause: 401 }));
+      return next(new Error("UnAuthorized to access", { cause: 401 }));
     }
     next();
   });
