@@ -1,7 +1,9 @@
 import productModel from "../../../../DB/models/product.model.js";
 import orderModel from "../../../../DB/models/order.model.js";
 import { SuccessResponse, asyncHandler } from "../../../utils/handlers.js";
-import userModel from "../../../../DB/models/user.model.js";
+import { generateRandomString } from "../../../utils/stringMethods.js";
+import createInvoice from "../../../utils/pdfkit.js";
+import sendEmail from "../../../services/emailService.js";
 
 export const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
@@ -63,6 +65,53 @@ export const addOrder = asyncHandler(async (req, res, next) => {
   const orderDb = await orderModel.create(orderObject);
   if (!orderDb) {
     return next(new Error("Order fail"));
+  }
+  //======================= invoice ==================
+  const orderCode = `${req.user.userName}__${generateRandomString(3)}`;
+  const invoiceData = {
+    orderCode,
+    date: orderDb.createdAt,
+    shipping: {
+      name: req.user.userName,
+      address,
+      city: "Giza",
+      state: "Giza",
+      country: "Egypt",
+    },
+    items: orderDb.products,
+    subTotal: orderDb.subTotal,
+    paidAmount: orderDb.paidAmount,
+  };
+  await createInvoice(invoiceData, `${orderCode}.pdf`);
+  await sendEmail({
+    to: req.user.email,
+    subject: "Order",
+    text: `<h1> Please find your invoice below </h1>`,
+    attachments: [
+      {
+        path: `./Files/${orderCode}.pdf`,
+      },
+    ],
+  });
+
+  for (let i = 0; i < sentProducts.length; i++) {
+    const productCheck = await productModel
+      .findOne({
+        _id: sentProducts[i].productId,
+      })
+      .select("priceAfterDiscount title stock");
+    if (productCheck){
+      productCheck.stock -= sentProducts[i].quantity
+    }
+    await productCheck.save();
+  }
+  if (req.coupon) {
+    for (const user of req.coupon.couponAssignedToUsers) {
+        if (user.userId.toString() == userId.toString()) {
+            user.usageCount += 1
+        }
+    }
+    await req.coupon.save()
   }
   return SuccessResponse(
     res,
@@ -163,15 +212,3 @@ export const formCartToOrder = asyncHandler(async (req, res, next) => {
     201
   );
 });
-// export const deleteOrder = asyncHandler(async (req, res, next) => {
-//   const { id } = req.params;
-//   const order = await orderModel.findOneAndDelete({ _id: id });
-//   if (!order) {
-//     return next(new Error("Order is not found", { cause: 400 }));
-//   }
-//   return SuccessResponse(
-//     res,
-//     { message: "Order deleted successfully", statusCode: 200, order },
-//     200
-//   );
-// });
