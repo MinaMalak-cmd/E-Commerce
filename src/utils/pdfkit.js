@@ -21,6 +21,7 @@ async function createInvoice(invoice, pathVar) {
 function generateHeader(doc) {
   doc
     .image('DB models.png', 50, 45, { width: 50 })
+    // .image('logo.png', 50, 45, { width: 50 })
     // image-name, x-axis, y-axis
     .fillColor('#444444') // black
     .fontSize(20) // 20
