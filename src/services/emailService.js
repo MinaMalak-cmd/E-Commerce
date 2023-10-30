@@ -25,7 +25,7 @@ const sendEmail = async ({
     },
   });
 
-  const info = await transporter.sendMail({
+  const emailInfo = await transporter.sendMail({
     from: `'${fromPrefix}' <${from}>`, // sender address
     to, // ['', ''] list of receivers
     subject, // Subject line
@@ -36,5 +36,9 @@ const sendEmail = async ({
     attachments,
   
   });
+  if(emailInfo.accepted.length){
+    return true
+  }
+  return false
 };
 export default sendEmail;

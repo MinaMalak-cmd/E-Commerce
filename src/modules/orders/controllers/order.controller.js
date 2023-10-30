@@ -83,7 +83,7 @@ export const addOrder = asyncHandler(async (req, res, next) => {
     paidAmount: orderDb.paidAmount,
   };
   await createInvoice(invoiceData, `${orderCode}.pdf`);
-  await sendEmail({
+  const emailSent = await sendEmail({
     to: req.user.email,
     subject: "Order",
     text: `<h1> Please find your invoice below </h1>`,
@@ -93,6 +93,9 @@ export const addOrder = asyncHandler(async (req, res, next) => {
       },
     ],
   });
+  if(!emailSent) {
+    return next(new Error('Fail to sent confirmation email', { cause: 400 }))
+  }
 
   for (let i = 0; i < sentProducts.length; i++) {
     const productCheck = await productModel
