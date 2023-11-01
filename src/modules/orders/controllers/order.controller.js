@@ -1,3 +1,4 @@
+import Stripe from 'stripe';
 import productModel from "../../../../DB/models/product.model.js";
 import orderModel from "../../../../DB/models/order.model.js";
 import { SuccessResponse, asyncHandler } from "../../../utils/handlers.js";
@@ -6,6 +7,7 @@ import createInvoice from "../../../utils/pdfkit.js";
 import sendEmail from "../../../services/emailService.js";
 import { paymentMethods } from "../../../utils/constants.js";
 import { paymentFunction } from "../../../utils/payment.js";
+import { generateToken } from "../../../utils/tokenFunctions.js";
 
 export const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
@@ -75,6 +77,20 @@ export const addOrder = asyncHandler(async (req, res, next) => {
 
   let payment;
   if (orderDb.paymentMethod === paymentMethods.CARD) {
+    let stripeCoupon;
+    if(orderDb.couponId){
+      const stripeConnection = new Stripe(process.env.STRIPE_KEY);
+      if(req.coupon.isPercentage){
+        stripeCoupon = await stripeConnection.coupons.create({
+          percent_off: req.coupon.couponAmount
+        })
+      }else if(req.coupon.isFixedAmount){
+        stripeCoupon = await stripeConnection.coupons.create({
+          amount_off: req.coupon.couponAmount * 100,
+          currency:'EGP'
+        })
+      }
+    }
       const line_items = orderDb.products.map((product) => {
         return {
           price_data: {
@@ -87,15 +103,18 @@ export const addOrder = asyncHandler(async (req, res, next) => {
           quantity: product.quantity,
         };
       });
-    
+    const token = generateToken({
+      payload: { orderId: orderDb._id },
+      signature: process.env.STRIPE_SIGNATURE,
+    });
     payment = await paymentFunction({
       payment_method_types: ['card'],
       mode: 'payment',
       customer_email: req.user.email,
-      success_url: "https://docs.mapbox.com/mapbox-gl-js/api/",
-      cancel_url: "https://react.dev/",
+      success_url: `http://localhost:3000/order/successPayment/${token}`,
+      cancel_url: `http://localhost:3000/order/cancelPayment/${token}`,
       metadata: { orderId: orderDb._id.toString() },
-      discounts : [],
+      discounts : stripeCoupon ? [{ coupon : stripeCoupon.id}] : [],
       line_items
     });
     
