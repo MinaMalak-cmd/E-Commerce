@@ -4,6 +4,8 @@ import { SuccessResponse, asyncHandler } from "../../../utils/handlers.js";
 import { generateRandomString } from "../../../utils/stringMethods.js";
 import createInvoice from "../../../utils/pdfkit.js";
 import sendEmail from "../../../services/emailService.js";
+import { paymentMethods } from "../../../utils/constants.js";
+import { paymentFunction } from "../../../utils/payment.js";
 
 export const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
@@ -38,6 +40,8 @@ export const addOrder = asyncHandler(async (req, res, next) => {
       continue;
     }
   }
+
+  
   if (coupon?.isFixedAmount && subTotal < coupon?.couponAmount) {
     return next(new Error("Invalid coupon amount", { cause: 400 }));
   }
@@ -62,10 +66,43 @@ export const addOrder = asyncHandler(async (req, res, next) => {
     paymentMethod,
     orderStatus,
   };
+  
   const orderDb = await orderModel.create(orderObject);
   if (!orderDb) {
     return next(new Error("Order fail"));
   }
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+  let payment;
+  if (orderDb.paymentMethod === paymentMethods.CARD) {
+      const line_items = orderDb.products.map((product) => {
+        return {
+          price_data: {
+            currency: 'EGP',
+            product_data: {
+              name: product.title,
+            },
+            unit_amount: product.price * 100,
+          },
+          quantity: product.quantity,
+        };
+      });
+    
+    payment = await paymentFunction({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      customer_email: req.user.email,
+      success_url: "https://docs.mapbox.com/mapbox-gl-js/api/",
+      cancel_url: "https://react.dev/",
+      metadata: { orderId: orderDb._id.toString() },
+      discounts : [],
+      line_items
+    });
+    
+  }
+
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+
   //======================= invoice ==================
   const orderCode = `${req.user.userName}__${generateRandomString(3)}`;
   const invoiceData = {
@@ -118,7 +155,7 @@ export const addOrder = asyncHandler(async (req, res, next) => {
   }
   return SuccessResponse(
     res,
-    { message: "Order created successfully", statusCode: 230, orderDb },
+    { message: "Order created successfully", statusCode: 230, orderDb, payment },
     201
   );
 });
