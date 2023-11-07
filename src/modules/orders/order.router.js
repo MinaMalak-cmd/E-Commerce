@@ -9,9 +9,11 @@ const router = Router();
 
 router.post('/', handleAuth, handleUserRole([systemRoles.USER]), handleCouponValidate, orderController.addOrder);
 router.post('/from-cart', handleAuth, handleUserRole([systemRoles.USER]), handleCouponValidate, orderController.formCartToOrder);
-// router.get('/', handleAuth, handleUserRole([systemRoles.VENDOR, systemRoles.SUPER_ADMIN]), orderController.getAllOrders);
+router.get('/', handleAuth, handleUserRole([systemRoles.VENDOR, systemRoles.SUPER_ADMIN]), orderController.getAllOrders);
 // router.post('/webhook', express.raw({type : 'application/json'}) ,orderController.successPayment)
+// it should be post endpoints not get
 router.get('/successPayment/:token', orderController.successPayment)
+router.get('/cancelPayment/:token', orderController.cancelPayment)
 // router.delete('/:id', handleAuth, validation(orderValidators.deleteOrder), orderController.deleteOrder);
 
 

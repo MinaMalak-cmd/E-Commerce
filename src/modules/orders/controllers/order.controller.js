@@ -183,7 +183,10 @@ export const addOrder = asyncHandler(async (req, res, next) => {
 });
 
 export const getAllOrders = asyncHandler(async (req, res, next) => {
-  const orders = await orderModel.find();
+  const orders = await orderModel.find().populate({
+    path: 'couponId',
+    select: 'couponAmount couponAssignedToUsers'
+  });
 
   return orders
     ? SuccessResponse(
@@ -335,5 +338,47 @@ export const successPayment = asyncHandler(async (req, res, next) => {
     res,
     { message: "Payment Done", statusCode: 230, order },
     200
+  );
+});
+
+export const cancelPayment = asyncHandler(async (req, res, next) => {
+  const { token } = req.params;
+  const decodedData = verifyToken({
+    token,
+    signature: process.env.STRIPE_SIGNATURE,
+  });
+  if (!decodedData.orderId) {
+    return next(new Error("invalid token", { cause: 400 }));
+  }
+  const order = await orderModel.findOneAndUpdate(
+    { _id: decodedData.orderId, orderStatus: orderStatus.PENDING },
+    { orderStatus: orderStatus.CANCELLED },
+    { new: true }
+  ).populate({
+    path: 'couponId',
+    select: 'couponAmount couponAssignedToUsers'
+  });
+  if (!order) {
+    return next(new Error("invalid order", { cause: 400 }));
+  }
+  let coupon = order?.couponId;
+  if (coupon) {
+    for (const user of coupon.couponAssignedToUsers) {
+      if (user.userId.toString() == order.userId.toString()) {
+        user.usageCount -= 1;
+      }
+    }
+    await coupon.save();
+  }
+ for(let product of order.products){
+  await productModel.findByIdAndUpdate(product.productId, {
+    $inc: { stock : parseInt(product.quantity)}
+  })
+ }
+
+  return SuccessResponse(
+    res,
+    { message: "Payment Cancelled", statusCode: 500, order },
+    500
   );
 });
