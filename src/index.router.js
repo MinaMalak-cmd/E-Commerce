@@ -17,12 +17,10 @@ const initApp = async (express) => {
 
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use((req, res, next) => {
-    if (req.originUrl.includes("/order/webhook")) {
+    if (req.originUrl == "/order/webhook") {
       next();
     } else {
-      // express.json({})(req,res,next)
-      express.json();
-      next();
+      express.json({})(req,res,next)
     }
   });
   // app.use(express.json());

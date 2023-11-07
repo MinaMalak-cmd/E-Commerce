@@ -9,8 +9,9 @@ const router = Router();
 
 router.post('/', handleAuth, handleUserRole([systemRoles.USER]), handleCouponValidate, orderController.addOrder);
 router.post('/from-cart', handleAuth, handleUserRole([systemRoles.USER]), handleCouponValidate, orderController.formCartToOrder);
-router.get('/', handleAuth, handleUserRole([systemRoles.VENDOR, systemRoles.SUPER_ADMIN]), orderController.getAllOrders);
-router.post('/webhook', express.raw({type : 'application/json'}) ,orderController.successPayment)
+// router.get('/', handleAuth, handleUserRole([systemRoles.VENDOR, systemRoles.SUPER_ADMIN]), orderController.getAllOrders);
+// router.post('/webhook', express.raw({type : 'application/json'}) ,orderController.successPayment)
+router.get('/successPayment/:token', orderController.successPayment)
 // router.delete('/:id', handleAuth, validation(orderValidators.deleteOrder), orderController.deleteOrder);
 
 

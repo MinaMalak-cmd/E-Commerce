@@ -1,4 +1,4 @@
-import Stripe from 'stripe';
+import Stripe from "stripe";
 import productModel from "../../../../DB/models/product.model.js";
 import orderModel from "../../../../DB/models/order.model.js";
 import { SuccessResponse, asyncHandler } from "../../../utils/handlers.js";
@@ -7,7 +7,7 @@ import createInvoice from "../../../utils/pdfkit.js";
 import sendEmail from "../../../services/emailService.js";
 import { paymentMethods, orderStatus } from "../../../utils/constants.js";
 import { paymentFunction } from "../../../utils/payment.js";
-import { generateToken } from "../../../utils/tokenFunctions.js";
+import { generateToken, verifyToken } from "../../../utils/tokenFunctions.js";
 
 export const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
@@ -15,7 +15,7 @@ export const addOrder = asyncHandler(async (req, res, next) => {
   const coupon = req?.coupon;
   let sentProducts = [];
   let subTotal = 0;
-  for (let i = 0; i < products.length; i++) {
+  for (let i = 0; i < products?.length; i++) {
     const productCheck = await productModel
       .findOne({
         _id: products[i].productId,
@@ -43,7 +43,6 @@ export const addOrder = asyncHandler(async (req, res, next) => {
     }
   }
 
-  
   if (coupon?.isFixedAmount && subTotal < coupon?.couponAmount) {
     return next(new Error("Invalid coupon amount", { cause: 400 }));
   }
@@ -68,7 +67,7 @@ export const addOrder = asyncHandler(async (req, res, next) => {
     paymentMethod,
     orderStatus,
   };
-  
+
   const orderDb = await orderModel.create(orderObject);
   if (!orderDb) {
     return next(new Error("Order fail"));
@@ -78,46 +77,45 @@ export const addOrder = asyncHandler(async (req, res, next) => {
   let payment;
   if (orderDb.paymentMethod === paymentMethods.CARD) {
     let stripeCoupon;
-    if(orderDb.couponId){
+    if (orderDb.couponId) {
       const stripeConnection = new Stripe(process.env.STRIPE_KEY);
-      if(req.coupon.isPercentage){
+      if (req.coupon.isPercentage) {
         stripeCoupon = await stripeConnection.coupons.create({
-          percent_off: req.coupon.couponAmount
-        })
-      }else if(req.coupon.isFixedAmount){
+          percent_off: req.coupon.couponAmount,
+        });
+      } else if (req.coupon.isFixedAmount) {
         stripeCoupon = await stripeConnection.coupons.create({
           amount_off: req.coupon.couponAmount * 100,
-          currency:'EGP'
-        })
+          currency: "EGP",
+        });
       }
     }
-      const line_items = orderDb.products.map((product) => {
-        return {
-          price_data: {
-            currency: 'EGP',
-            product_data: {
-              name: product.title,
-            },
-            unit_amount: product.price * 100,
+    const line_items = orderDb.products.map((product) => {
+      return {
+        price_data: {
+          currency: "EGP",
+          product_data: {
+            name: product.title,
           },
-          quantity: product.quantity,
-        };
-      });
+          unit_amount: product.price * 100,
+        },
+        quantity: product.quantity,
+      };
+    });
     const token = generateToken({
       payload: { orderId: orderDb._id },
       signature: process.env.STRIPE_SIGNATURE,
     });
     payment = await paymentFunction({
-      payment_method_types: ['card'],
-      mode: 'payment',
+      payment_method_types: ["card"],
+      mode: "payment",
       customer_email: req.user.email,
-      success_url: `http://localhost:3000/order/successPayment/${token}`,
-      cancel_url: `http://localhost:3000/order/cancelPayment/${token}`,
+      success_url: `http://localhost:5000/${process.env.PROJECT_FOLDER}/order/successPayment/${token}`,
+      cancel_url: `http://localhost:5000/${process.env.PROJECT_FOLDER}/order/cancelPayment/${token}`,
       metadata: { orderId: orderDb._id.toString() },
-      discounts : stripeCoupon ? [{ coupon : stripeCoupon.id}] : [],
-      line_items
+      discounts: stripeCoupon ? [{ coupon: stripeCoupon.id }] : [],
+      line_items,
     });
-    
   }
 
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
@@ -149,8 +147,8 @@ export const addOrder = asyncHandler(async (req, res, next) => {
       },
     ],
   });
-  if(!emailSent) {
-    return next(new Error('Fail to sent confirmation email', { cause: 400 }))
+  if (!emailSent) {
+    return next(new Error("Fail to sent confirmation email", { cause: 400 }));
   }
 
   for (let i = 0; i < sentProducts.length; i++) {
@@ -159,22 +157,27 @@ export const addOrder = asyncHandler(async (req, res, next) => {
         _id: sentProducts[i].productId,
       })
       .select("priceAfterDiscount title stock");
-    if (productCheck){
-      productCheck.stock -= sentProducts[i].quantity
+    if (productCheck) {
+      productCheck.stock -= sentProducts[i].quantity;
     }
     await productCheck.save();
   }
   if (req.coupon) {
     for (const user of req.coupon.couponAssignedToUsers) {
-        if (user.userId.toString() == userId.toString()) {
-            user.usageCount += 1
-        }
+      if (user.userId.toString() == userId.toString()) {
+        user.usageCount += 1;
+      }
     }
-    await req.coupon.save()
+    await req.coupon.save();
   }
   return SuccessResponse(
     res,
-    { message: "Order created successfully", statusCode: 230, orderDb, payment },
+    {
+      message: "Order created successfully",
+      statusCode: 230,
+      orderDb,
+      payment,
+    },
     201
   );
 });
@@ -273,40 +276,64 @@ export const formCartToOrder = asyncHandler(async (req, res, next) => {
 });
 
 //============================= you can use webhooks as alternative ========================
+// export const successPayment = asyncHandler(async (req, res, next) => {
+//     const stripe = new Stripe(process.env.STRIPE_KEY);
+//     const sig = req.headers['stripe-signature'];
+//     let event;
+//     try {
+//       event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_ENDPOINT_SECRET);
+//     } catch (err) {
+//       return res.status(400).send(`Webhook Error: ${err.message}`);;
+//     }
+
+//     // Handle the event
+//     const {orderId } = event.data.object.metadata;
+//     switch (event.type) {
+//       // case 'checkout.session.async_payment_failed':
+//       //   const checkoutSessionAsyncPaymentFailed = event.data.object;
+//       //   break;
+//       // case 'checkout.session.async_payment_succeeded':
+//       //   const checkoutSessionAsyncPaymentSucceeded = event.data.object;
+//       //   break;
+//       case 'checkout.session.completed':
+//         await orderModel.findOneAndUpdate({ _id: orderId}, { orderStatus : orderStatus.CONFIRMED})
+//         return  SuccessResponse(
+//           res,
+//           { message: "Payment Done", statusCode: 230 },
+//           200
+//         );
+//       default:
+//         await orderModel.findOneAndUpdate({ _id: orderId}, { orderStatus : orderStatus.CANCELLED})
+//         return next(
+//           new Error(
+//             "Please try again later",
+//             { cause: 500 }
+//           )
+//         );
+//     }
+
+// });
+
 export const successPayment = asyncHandler(async (req, res, next) => {
-    const stripe = new Stripe(process.env.STRIPE_KEY);
-    const sig = req.headers['stripe-signature'];
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_ENDPOINT_SECRET);
-    } catch (err) {
-      return res.status(400).send(`Webhook Error: ${err.message}`);;
-    }
-  
-    // Handle the event
-    const {orderId } = event.data.object.metadata;
-    switch (event.type) {
-      // case 'checkout.session.async_payment_failed':
-      //   const checkoutSessionAsyncPaymentFailed = event.data.object;
-      //   break;
-      // case 'checkout.session.async_payment_succeeded':
-      //   const checkoutSessionAsyncPaymentSucceeded = event.data.object;
-      //   break;
-      case 'checkout.session.completed':
-        await orderModel.findOneAndUpdate({ _id: orderId}, { orderStatus : orderStatus.CONFIRMED})
-        return  SuccessResponse(
-          res,
-          { message: "Payment Done", statusCode: 230 },
-          200
-        );
-      default:
-        await orderModel.findOneAndUpdate({ _id: orderId}, { orderStatus : orderStatus.CANCELLED})
-        return next(
-          new Error(
-            "Please try again later",
-            { cause: 500 }
-          )
-        );
-    }
-  
+  const { token } = req.params;
+  const decodedData = verifyToken({
+    token,
+    signature: process.env.STRIPE_SIGNATURE,
+  });
+  if (!decodedData.orderId) {
+    return next(new Error("invalid token", { cause: 400 }));
+  }
+  const order = await orderModel.findOneAndUpdate(
+    { _id: decodedData.orderId, orderStatus: orderStatus.PENDING },
+    { orderStatus: orderStatus.CONFIRMED },
+    { new: true }
+  );
+  if (!order) {
+    return next(new Error("invalid order", { cause: 400 }));
+  }
+  return SuccessResponse(
+    res,
+    { message: "Payment Done", statusCode: 230, order },
+    200
+  );
 });
