@@ -5,7 +5,7 @@ import { SuccessResponse, asyncHandler } from "../../../utils/handlers.js";
 import { generateRandomString } from "../../../utils/stringMethods.js";
 import createInvoice from "../../../utils/pdfkit.js";
 import sendEmail from "../../../services/emailService.js";
-import { paymentMethods } from "../../../utils/constants.js";
+import { paymentMethods, orderStatus } from "../../../utils/constants.js";
 import { paymentFunction } from "../../../utils/payment.js";
 import { generateToken } from "../../../utils/tokenFunctions.js";
 
@@ -270,4 +270,43 @@ export const formCartToOrder = asyncHandler(async (req, res, next) => {
     { message: "Order created successfully", statusCode: 230, orderDb },
     201
   );
+});
+
+//============================= you can use webhooks as alternative ========================
+export const successPayment = asyncHandler(async (req, res, next) => {
+    const stripe = new Stripe(process.env.STRIPE_KEY);
+    const sig = req.headers['stripe-signature'];
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_ENDPOINT_SECRET);
+    } catch (err) {
+      return res.status(400).send(`Webhook Error: ${err.message}`);;
+    }
+  
+    // Handle the event
+    const {orderId } = event.data.object.metadata;
+    switch (event.type) {
+      // case 'checkout.session.async_payment_failed':
+      //   const checkoutSessionAsyncPaymentFailed = event.data.object;
+      //   break;
+      // case 'checkout.session.async_payment_succeeded':
+      //   const checkoutSessionAsyncPaymentSucceeded = event.data.object;
+      //   break;
+      case 'checkout.session.completed':
+        await orderModel.findOneAndUpdate({ _id: orderId}, { orderStatus : orderStatus.CONFIRMED})
+        return  SuccessResponse(
+          res,
+          { message: "Payment Done", statusCode: 230 },
+          200
+        );
+      default:
+        await orderModel.findOneAndUpdate({ _id: orderId}, { orderStatus : orderStatus.CANCELLED})
+        return next(
+          new Error(
+            "Please try again later",
+            { cause: 500 }
+          )
+        );
+    }
+  
 });

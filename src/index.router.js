@@ -1,5 +1,5 @@
 import connectDB from "../DB/connection.js";
-import bodyParser from 'body-parser';
+import bodyParser from "body-parser";
 
 import authRouter from "./modules/auth/auth.router.js";
 import categoryRouter from "./modules/category/category.router.js";
@@ -14,9 +14,18 @@ import { globalErrorHandling } from "./utils/handlers.js";
 const initApp = async (express) => {
   const app = express();
   const port = process.env.PORT || 5000;
-  
+
   app.use(bodyParser.urlencoded({ extended: true }));
-  app.use(express.json());
+  app.use((req, res, next) => {
+    if (req.originUrl.includes("/order/webhook")) {
+      next();
+    } else {
+      // express.json({})(req,res,next)
+      express.json();
+      next();
+    }
+  });
+  // app.use(express.json());
 
   await connectDB();
   const base = `/${process.env.PROJECT_FOLDER}`;
