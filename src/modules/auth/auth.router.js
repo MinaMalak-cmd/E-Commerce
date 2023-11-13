@@ -13,5 +13,5 @@ router.get("/confirm-email/:token", authController.confirmEmail);
 router.get("/new-confirm-email/:token", authController.newConfirmEmail);
 router.get("/unsubscribe/:token", authController.unSubscribe);
 router.post("/forget-password", validation(validators.forgetPassword), authController.forgetPassword);
-router.post('/login-with-gmail', authController.loginWithGmail);
+router.post('/google', authController.loginWithGmail);
 export default router;

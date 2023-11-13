@@ -1,5 +1,6 @@
 import connectDB from "../DB/connection.js";
 import bodyParser from "body-parser";
+import cors from "cors";
 
 import authRouter from "./modules/auth/auth.router.js";
 import categoryRouter from "./modules/category/category.router.js";
@@ -20,11 +21,22 @@ const initApp = async (express) => {
     if (req.originUrl == "/order/webhook") {
       next();
     } else {
-      express.json({})(req,res,next)
+      express.json({})(req, res, next);
     }
   });
+  const whitelist = ["http://example1.com", "http://example2.com", undefined];
+  // must change whitelist in production
+  const corsOptions = {
+    origin: function (origin, callback) {
+      if (whitelist.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+  };
   // app.use(express.json());
-
+  app.use(cors(corsOptions));
   await connectDB();
   const base = `/${process.env.PROJECT_FOLDER}`;
   app.use(`${base}/auth`, authRouter);
