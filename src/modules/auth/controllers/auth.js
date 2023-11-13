@@ -1,14 +1,26 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 
 import userModel from "../../../../DB/models/user.model.js";
 import { asyncHandler, SuccessResponse } from "../../../utils/handlers.js";
 import sendEmail from "../../../services/emailService.js";
+import { generateRandomString } from "../../../utils/stringMethods.js";
 
 export const signup = asyncHandler(async (req, res, next) => {
   const protocol = req.protocol;
   const host = req.headers.host;
-  const { userName, email, password, cPassword, age, gender, phone, address, role } = req.body;
+  const {
+    userName,
+    email,
+    password,
+    cPassword,
+    age,
+    gender,
+    phone,
+    address,
+    role,
+  } = req.body;
 
   if (password != cPassword) {
     return next(new Error("Password Mismatch cPassword", { cause: 400 }));
@@ -32,8 +44,8 @@ export const signup = asyncHandler(async (req, res, next) => {
     age,
     gender,
     phone,
-    address, 
-    role
+    address,
+    role,
   });
 
   const token = jwt.sign(
@@ -455,7 +467,7 @@ export const forgetPassword = asyncHandler(async (req, res, next) => {
 
 export const getAllUsers = asyncHandler(async (req, res, next) => {
   const users = await userModel.find();
-  
+
   return users
     ? SuccessResponse(
         res,
@@ -467,4 +479,81 @@ export const getAllUsers = asyncHandler(async (req, res, next) => {
         200
       )
     : next(new Error("Can't get All users", { cause: 400 }));
+});
+
+export const loginWithGmail = asyncHandler(async (req, res, next) => {
+  const client = new OAuth2Client();
+  const { idToken } = req.body;
+
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  async function verify() {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID, // Specify the CLIENT_ID of the app that accesses the backend
+      // Or, if multiple clients access the backend:
+      //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+    });
+    const payload = ticket.getPayload();
+    return payload;
+  }
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+
+  const { email_verified, email, name } = await verify();
+  if (!email_verified || !email) {
+    return next(new Error("Email not verified", { cause: 400 }));
+  }
+  const user = await userModel.findOne({ email, provider: "GOOGLE" });
+  if (user) {
+    const token = generateToken({
+      payload: { _id: user._id, email: user.email, role: user.role },
+      signature: process.env.TOKEN_SIGNATURE,
+      expiresIn: "1h",
+    });
+    const updatedUser = await userModel.findOneAndUpdate(
+      { email },
+      {
+        token,
+        status: "Online",
+      },
+      {
+        new: true,
+      }
+    );
+    return SuccessResponse(
+      res,
+      {
+        message: "User found",
+        statusCode: 200,
+        updatedUser,
+        token,
+      },
+      200
+    );
+  }
+  // signUp
+  const newUser = await userModel.create({
+    userName: name,
+    email,
+    provider: "GOOGLE",
+    isConfirmed: true,
+    password: generateRandomString(5),
+    phoneNumber: "0000000",
+    address: ["giza"],
+  });
+
+  const token = generateToken({
+    payload: { _id: newUser._id, email: newUser.email, role: newUser.role },
+    signature: process.env.TOKEN_SIGNATURE,
+    expiresIn: "1h",
+  });
+  return SuccessResponse(
+    res,
+    {
+      message: "User Created",
+      statusCode: 201,
+      newUser,
+      token,
+    },
+    200
+  );
 });

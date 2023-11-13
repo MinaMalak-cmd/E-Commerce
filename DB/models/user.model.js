@@ -66,6 +66,10 @@ const userSchema = new Schema(
         public_id: String,
       },
     ],
+    provider:{
+      type:String,
+      enum:['system', 'GOOGLE']
+    },
     forgetCode: String,
   },
   {
