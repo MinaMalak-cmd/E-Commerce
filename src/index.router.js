@@ -38,6 +38,7 @@ const initApp = async (express) => {
   // app.use(express.json());
   app.use(cors(corsOptions));
   await connectDB();
+  app.use(`/`, res.send("Hello World"));
   const base = `/${process.env.PROJECT_FOLDER}`;
   app.use(`${base}/auth`, authRouter);
   app.use(`${base}/category`, categoryRouter);
