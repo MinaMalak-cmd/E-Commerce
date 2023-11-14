@@ -1,6 +1,7 @@
 import mongoose, { Schema, Types, model } from "mongoose";
 import subCategoryModel from "./subcategory.model.js";
 import brandModel from "./brand.model.js";
+import productModel from "./product.model.js";
 
 const categorySchema = new Schema(
   {
@@ -53,6 +54,12 @@ categorySchema.virtual('brands', {
   foreignField: 'categoryId'
 });
 
+categorySchema.virtual('products', {
+  ref: 'Product',
+  localField: '_id',
+  foreignField: 'categoryId'
+});
+
 // categorySchema.post('findOneAndDelete', { document: true, query: true } ,function(next, doc) {
 categorySchema.pre('findOneAndDelete', { document: true, query: true } ,async function(next) {
   const categoryId = this?._conditions?._id || 0;
@@ -60,6 +67,7 @@ categorySchema.pre('findOneAndDelete', { document: true, query: true } ,async fu
   try {
     await subCategoryModel.deleteMany({ categoryId: categoryId });
     await brandModel.deleteMany({ categoryId: categoryId });
+    await productModel.deleteMany({ categoryId: categoryId });
     next();
   } catch (error) {
     return next(new Error(`${error} from hook part`, { cause: 500 }))

@@ -41,6 +41,11 @@ export const generalFields = {
     })
     .required(),
   _id : Joi.string().custom(validationObjectId),
+  couponAssignedToUsers: Joi.object({
+    userId : Joi.string().custom(validationObjectId).required(),
+    maxUsage : Joi.number().integer().min(1).required(),
+    // usageCount: Joi.number().integer()
+  }),
   file : Joi.object({
     fieldname: Joi.string().required(),
     originalname: Joi.string().required(),
@@ -50,5 +55,9 @@ export const generalFields = {
     filename: Joi.string().required(),
     path: Joi.string().required(),
     size: Joi.number().required()
+  }),
+  productInCart : Joi.object({
+    productId: Joi.string().custom(validationObjectId),
+    quantity: Joi.number().integer().min(1)
   }),
 };

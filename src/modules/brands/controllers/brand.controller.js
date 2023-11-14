@@ -16,7 +16,7 @@ export const addBrand = asyncHandler(async (req, res, next) => {
   const isNameDuplicate = await brandModel.findOne({ name });
   if (isNameDuplicate) {
     return next(
-      new Error("Please enter different category name", { cause: 400 })
+      new Error("Please enter different brand name", { cause: 400 })
     );
   }
   const category = await categoryModel.findById(categoryId);
