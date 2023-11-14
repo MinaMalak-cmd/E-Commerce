@@ -4,9 +4,13 @@
   "description": "E Commerce app using Node.js, Express, MongoDB, JWT, and JOI",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": "14.7.4"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "start":"node index.js"
   },
   "repository": {
     "type": "git",
